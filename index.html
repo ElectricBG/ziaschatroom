@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Zia's chat room</title>
+</head>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<body>
+
+<h1>Group Chatㅤㅤㅤㅤㅤㅤㅤㅤㅤ
+  <br>(By Zia)
+</h1>
+
+<body>
+
+  <div id="chat-container">
+    <div id="messages"></div>
+    <div id="input-area">
+      <input id="name" placeholder="Your name">
+      <input id="text" placeholder="Type a message">
+      <button id="send">Send</button>
+    </div>
+  </div>
+  
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+  // ======= 🔹 Replace this with your Firebase config =======
+  const firebaseConfig = {
+  apiKey: "AIzaSyDMxGYunhWOokdyha4nKAvRJdokYf2RdOw",
+  authDomain: "ziaschatroom.firebaseapp.com",
+  databaseURL: "https://ziaschatroom-default-rtdb.firebaseio.com",
+  projectId: "ziaschatroom",
+  storageBucket: "ziaschatroom.firebasestorage.app",
+  messagingSenderId: "523222703415",
+  appId: "1:523222703415:web:d6f5104012cdcb37cd8eb2",
+  };
+  // ========================================================
+
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  const messagesDiv = document.getElementById('messages');
+  const nameInput = document.getElementById('name');
+  const textInput = document.getElementById('text');
+  const sendBtn = document.getElementById('send');
+
+  // Send message
+  sendBtn.onclick = () => {
+    const name = nameInput.value.trim() || 'Anon';
+    const text = textInput.value.trim();
+    if (!text) return;
+
+    const msgObj = {
+      name,
+      text,
+      ts: Date.now()
+    };
+    db.ref('messages').push(msgObj);
+    textInput.value = '';
+  };
+
+  // Listen for new messages in real-time
+  db.ref('messages').on('child_added', snapshot => {
+    const msg = snapshot.val();
+    const div = document.createElement('div');
+    div.className = 'msg';
+    div.innerHTML = `<strong>${escapeHtml(msg.name)}</strong>: ${escapeHtml(msg.text)} <div class="meta">${new Date(msg.ts).toLocaleTimeString()}</div>`;
+    messagesDiv.appendChild(div);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  });
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
+  }
+</script>
+  <style>
+ /* ====== Body ====== */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-image: url('https://static.vecteezy.com/system/resources/previews/001/401/677/non_2x/abstract-polygonal-shape-black-background-free-vector.jpg');
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  color: #fff;
+}
+
+/* ====== Chat Container ====== */
+#chat-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 600px;
+  height: 90vh; /* fills most of screen */
+  background-color: #1e1e1e;
+  border-radius: 12px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.5);
+  overflow: hidden;
+}
+
+/* ====== Messages Box ====== */
+#messages {
+  flex: 1; /* fills vertical space above input */
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background-color: #121212;
+  align-items: flex-start; /* default left alignment for others */
+}
+
+.msg {
+  max-width: 70%;
+  padding: 10px 14px;
+  border-radius: 20px;
+  background-color: #2a2a2a;
+  color: #fff;
+  word-wrap: break-word;
+}
+
+.msg.own {
+  background-color: #075e54; /* your messages green */
+  align-self: flex-end;      /* align right */
+}
+
+.msg strong {
+  color: #00bfa5;
+}
+
+.meta {
+  font-size: 11px;
+  color: #aaa;
+  text-align: right;
+  margin-top: 4px;
+}
+
+/* ====== Input Area ====== */
+#input-area {
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  background-color: #1e1e1e;
+  justify-content: flex-start; /* inputs on left */
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+#name, #text {
+  flex: 0 0 auto;  /* prevent stretching */
+  width: auto;
+  padding: 10px 12px;
+  border-radius: 25px;
+  border: 1px solid #555;
+  background-color: #121212;
+  color: #fff;
+  font-size: 14px;
+}
+
+#name::placeholder, #text::placeholder {
+  color: #aaa;
+}
+
+#send {
+  padding: 10px 20px;
+  border-radius: 25px;
+  border: none;
+  background-color: #00bfa5;
+  color: #121212;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+#send:hover {
+  background-color: #009e89;
+}
+
+/* ====== Scrollbar ====== */
+#messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+#messages::-webkit-scrollbar-thumb {
+  background-color: #555;
+  border-radius: 3px;
+}
+
+/* ====== Responsive ====== */
+@media (max-width: 500px) {
+  #chat-container {
+    max-width: 100%;
+    height: 90vh;
+  }
+  #text, #name {
+    font-size: 13px;
+  }
+  #send {
+    padding: 8px 15px;
+  }
+}
+
+  </style>
+
+</body>
+</html>
