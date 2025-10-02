@@ -31,8 +31,8 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <script>
-  // ======= 🔹 Replace this with your Firebase config =======
-  const firebaseConfig = {
+ // ======= 🔹 Replace this with your Firebase config =======
+const firebaseConfig = {
   apiKey: "AIzaSyDMxGYunhWOokdyha4nKAvRJdokYf2RdOw",
   authDomain: "ziaschatroom.firebaseapp.com",
   databaseURL: "https://ziaschatroom-default-rtdb.firebaseio.com",
@@ -40,52 +40,67 @@
   storageBucket: "ziaschatroom.firebasestorage.app",
   messagingSenderId: "523222703415",
   appId: "1:523222703415:web:d6f5104012cdcb37cd8eb2",
-  };
-  // ========================================================
+};
+// ========================================================
 
-  // Initialize Firebase
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-  const messagesDiv = document.getElementById('messages');
-  const nameInput = document.getElementById('name');
-  const textInput = document.getElementById('text');
-  const sendBtn = document.getElementById('send');
+const messagesDiv = document.getElementById('messages');
+const nameInput = document.getElementById('name');
+const textInput = document.getElementById('text');
+const sendBtn = document.getElementById('send');
+const clearBtn = document.getElementById('clear');
 
-  // Send message
-  sendBtn.onclick = () => {
-    const name = nameInput.value.trim() || 'Anon';
-    const text = textInput.value.trim();
-    if (!text) return;
+let nameLocked = false; // flag to lock name after first message
 
-    const msgObj = {
-      name,
-      text,
-      ts: Date.now()
-    };
-    db.ref('messages').push(msgObj);
-    textInput.value = '';
-  };
+// Send message
+sendBtn.onclick = () => {
+  const name = nameInput.value.trim() || 'Anon';
+  const text = textInput.value.trim();
+  if (!text) return;
 
-  // Listen for new messages in real-time
-  db.ref('messages').on('child_added', snapshot => {
-    const msg = snapshot.val();
-    const div = document.createElement('div');
-    div.className = 'msg';
-    div.innerHTML = `<strong>${escapeHtml(msg.name)}</strong>: ${escapeHtml(msg.text)} <div class="meta">${new Date(msg.ts).toLocaleTimeString()}</div>`;
-    messagesDiv.appendChild(div);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-  });
-
-  function escapeHtml(s) {
-    return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
+  // Lock the name after first message
+  if(!nameLocked){
+    nameInput.disabled = true;
+    nameLocked = true;
   }
 
-  const clearBtn = document.getElementById('clear');
-
-clearBtn.onclick = () => {
-  messagesDiv.innerHTML = ''; // Clears the messages div for the viewer
+  const msgObj = {
+    name,
+    text,
+    ts: Date.now()
+  };
+  db.ref('messages').push(msgObj);
+  textInput.value = '';
 };
+
+// Clear messages locally (viewer only)
+clearBtn.onclick = () => {
+  messagesDiv.innerHTML = '';
+};
+
+// Listen for new messages in real-time
+db.ref('messages').on('child_added', snapshot => {
+  const msg = snapshot.val();
+  const div = document.createElement('div');
+  div.className = 'msg';
+  const time = new Date(msg.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  div.innerHTML = `<strong>${escapeHtml(msg.name)}</strong>: ${escapeHtml(msg.text)} <div class="meta">${time}</div>`;
+  messagesDiv.appendChild(div);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+});
+
+// Escape HTML
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
+}
+
+// Allow pressing Enter to send message
+textInput.addEventListener("keypress", function(event) {
+  if(event.key === "Enter") sendBtn.click();
+});
 
 </script>
   <style>
@@ -100,6 +115,22 @@ body {
   align-items: center;
   height: 100vh;
   color: #fff;
+}
+
+/* Normal name input */
+#name {
+  padding: 10px;
+  border-radius: 20px;
+  border: none;
+  background: #3a3a3a;
+  color: #fff;
+}
+
+/* Locked name input */
+#name:disabled {
+  background: #666;   /* grey background */
+  color: #ccc;        /* light grey text */
+  cursor: not-allowed; /* show it’s uneditable */
 }
 
 /* ====== Chat Container ====== */
